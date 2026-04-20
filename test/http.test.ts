@@ -54,4 +54,33 @@ describe("HttpClient", () => {
       requestId: "req_123"
     } satisfies Partial<ApiError>);
   });
+
+  it("serializes nested range query params for API filters", async () => {
+    const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>(async () =>
+      mockResponse({ data: [] })
+    );
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetch: fetchMock as typeof fetch
+    });
+
+    await client.request({
+      method: "GET",
+      path: "/api/company/search",
+      options: {
+        query: {
+          countryCode: "NL",
+          postalCodeInteger: {
+            min: 1000,
+            max: 1099
+          }
+        }
+      }
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/company/search?countryCode=NL&postalCodeInteger%5Bmin%5D=1000&postalCodeInteger%5Bmax%5D=1099",
+      expect.objectContaining({ method: "GET" })
+    );
+  });
 });

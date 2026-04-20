@@ -1,5 +1,5 @@
 import { ApiError, toApiError } from "./errors";
-import type { ApiClientConfig, HttpMethod, RequestOptions, RetryConfig } from "./types";
+import type { ApiClientConfig, HttpMethod, QueryValue, RequestOptions, RetryConfig } from "./types";
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_RETRY_STATUSES = [429, 500, 502, 503, 504];
@@ -83,16 +83,12 @@ export class HttpClient {
 
   private buildUrl(
     path: string,
-    query?: Record<string, string | number | boolean | undefined | null>
+    query?: Record<string, QueryValue>
   ): string {
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     const url = new URL(`${this.baseUrl}${normalizedPath}`);
     if (query) {
-      for (const [key, value] of Object.entries(query)) {
-        if (value !== undefined && value !== null) {
-          url.searchParams.set(key, String(value));
-        }
-      }
+      appendQueryParams(url.searchParams, query);
     }
     return url.toString();
   }
@@ -171,4 +167,34 @@ async function delayWithJitter(
   const jitter = Math.floor(Math.random() * 100);
   const delayMs = exponential + jitter;
   await new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+function appendQueryParams(
+  searchParams: URLSearchParams,
+  query: Record<string, QueryValue>,
+  prefix?: string
+): void {
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === null) continue;
+    const fullKey = prefix ? `${prefix}[${key}]` : key;
+    appendQueryValue(searchParams, fullKey, value);
+  }
+}
+
+function appendQueryValue(searchParams: URLSearchParams, key: string, value: QueryValue): void {
+  if (value === undefined || value === null) return;
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      appendQueryValue(searchParams, key, item);
+    }
+    return;
+  }
+
+  if (typeof value === "object") {
+    appendQueryParams(searchParams, value as Record<string, QueryValue>, key);
+    return;
+  }
+
+  searchParams.append(key, String(value));
 }

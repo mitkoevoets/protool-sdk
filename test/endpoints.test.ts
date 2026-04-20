@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiClient } from "../src/client";
 
 describe("ApiClient endpoints", () => {
-  it("builds expected users.getById request", async () => {
+  it("builds expected company.search request", async () => {
     const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>(async () =>
-      new Response(JSON.stringify({ id: "u1", email: "test@example.com" }), {
+      new Response(JSON.stringify({ data: [{ ID: "1", "Company Name": "BoldData" }] }), {
         status: 200,
         headers: { "content-type": "application/json" }
       })
@@ -15,18 +15,18 @@ describe("ApiClient endpoints", () => {
       fetch: fetchMock as typeof fetch
     });
 
-    const user = await client.users.getById("u1");
+    const response = await client.company.search({ countryCode: "NL", search: "BoldData", page: 1, pageSize: 25 });
 
-    expect(user.id).toBe("u1");
+    expect(response.data).toBeDefined();
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.example.com/users/u1",
+      "https://api.example.com/api/company/search?countryCode=NL&search=BoldData&page=1&pageSize=25",
       expect.objectContaining({ method: "GET" })
     );
   });
 
-  it("sends idempotency key for project archive", async () => {
+  it("builds expected lookup.cities request", async () => {
     const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>(async () =>
-      new Response(JSON.stringify({ id: "p1", name: "Project", status: "archived" }), {
+      new Response(JSON.stringify({ data: [{ cityName: "AMSTERDAM", countryCode: "NL" }], total: 1, limit: 100 }), {
         status: 200,
         headers: { "content-type": "application/json" }
       })
@@ -36,12 +36,11 @@ describe("ApiClient endpoints", () => {
       fetch: fetchMock as typeof fetch
     });
 
-    await client.projects.archive("p1");
-    const firstCall = fetchMock.mock.calls[0];
-    expect(firstCall).toBeDefined();
-    const request = (firstCall?.[1] ?? {}) as RequestInit;
-    const headers = request.headers as Record<string, string>;
-
-    expect(headers["Idempotency-Key"]).toBe("archive-p1");
+    const response = await client.lookup.cities({ search: "ams", countries: "NL", limit: 100 });
+    expect(response.data[0]?.cityName).toBe("AMSTERDAM");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/cities?search=ams&countries=NL&limit=100",
+      expect.objectContaining({ method: "GET" })
+    );
   });
 });
