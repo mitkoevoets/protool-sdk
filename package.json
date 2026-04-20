@@ -1,0 +1,61 @@
+{
+  "name": "@companydata/protool-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for integrating with the ProTool API.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run clean && npm run lint && npm run typecheck && npm run test && npm run build",
+    "pack:check": "npm pack --dry-run",
+    "publish:public": "npm publish --access public"
+  },
+  "keywords": [
+    "sdk",
+    "api",
+    "typescript",
+    "fetch"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/companydata/protool-sdk.git"
+  },
+  "author": "BoldData BV",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^24.8.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "eslint": "^9.37.0",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
